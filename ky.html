@@ -1,0 +1,730 @@
+// Scriptable 脚本代码
+const html = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>My Little World</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+        
+        :root {
+            --pink: #FFB6C1; --pink-dark: #FF8DA1; --purple: #E6E6FA; --blue: #A2D2FF;
+            --green: #A8E6CF; --yellow: #FFF3B0; --bg: #f7eef3; --card-bg: rgba(255, 255, 255, 0.75); --text: #5A5A5A;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+        body {
+            background-color: var(--bg);
+            background-image: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e8eaf6 100%);
+            background-attachment: fixed; color: var(--text); padding-bottom: 90px; font-size: 14px;
+        }
+
+        .header-area { text-align: center; padding: 40px 20px 20px; }
+        .header-area h1 { font-family: 'ZCOOL KuaiLe', cursive, sans-serif; font-size: 32px; color: #8B5A6B; margin-bottom: 8px; }
+        .header-area p { color: #9c7a89; font-size: 14px; }
+
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 0 16px; }
+        @media (min-width: 768px) { .main-grid { grid-template-columns: 1fr 1.5fr 1fr; max-width: 1200px; margin: 0 auto; } }
+
+        .glass-card {
+            background: var(--card-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 24px; padding: 20px; box-shadow: 0 8px 32px rgba(255, 182, 193, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.8); margin-bottom: 16px;
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-weight: 600; color: #6B4F5A; font-size: 16px; }
+        
+        .app-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        @media (min-width: 500px) { .app-grid { grid-template-columns: repeat(3, 1fr); } }
+        .app-btn { background: rgba(255,255,255,0.6); border: 1px solid #fff; border-radius: 18px; padding: 16px 10px; text-align: center; cursor: pointer; transition: transform 0.2s; }
+        .app-btn:active { transform: scale(0.95); }
+        .app-btn .icon { font-size: 24px; margin-bottom: 8px; display: block; }
+        .app-btn .title { font-size: 14px; font-weight: 600; color: #5A5A5A; }
+        .app-btn .sub { font-size: 10px; color: #999; margin-top: 4px; }
+
+        .task-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(0,0,0,0.05); }
+        .circle-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #d1c4e9; margin-right: 12px; flex-shrink: 0; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .circle-check.checked { background: #e1bee7; border-color: #e1bee7; }
+        .circle-check.checked::after { content: '✓'; color: white; font-size: 12px; }
+        .task-text { flex: 1; font-size: 14px; color: #555; }
+        .task-item.done .task-text { text-decoration: line-through; color: #aaa; }
+        .del-btn { color: #ffb3b3; font-size: 14px; padding: 5px; cursor: pointer; font-weight: bold; }
+        .edit-btn { color: #A2D2FF; font-size: 14px; padding: 5px; cursor: pointer; margin-right:5px;}
+
+        .health-grid { display: flex; flex-direction: column; gap: 10px; }
+        .health-item { display: flex; justify-content: space-between; font-size: 13px; }
+        .health-item .label { color: #888; }
+        .health-item .value { font-weight: 600; color: #5A5A5A; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; padding: 10px 0 25px; border-radius: 30px 30px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.03); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #9c7a89; font-size: 10px; gap: 4px; cursor: pointer; }
+        .nav-item .nav-icon { font-size: 20px; }
+        .nav-item.active { color: var(--pink-dark); }
+
+        .sub-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); background-image: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 100%); z-index: 200; padding: 20px; padding-top: 60px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); overflow-y: auto; }
+        .sub-page.open { transform: translateY(0); }
+        .back-btn { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #6B4F5A; cursor: pointer; background: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .sub-page h2 { font-size: 22px; color: #6B4F5A; margin-bottom: 20px; text-align: center; }
+
+        .input-box { display: flex; gap: 8px; margin-top: 15px; }
+        .input-box input, .input-box textarea { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.8); font-size: 14px; outline: none; }
+        .input-box button { background: var(--pink-dark); color: white; border: none; padding: 0 16px; border-radius: 14px; font-weight: bold; cursor: pointer; }
+
+        .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .food-btn { background: #fff; border: 1px solid #FFE4E1; border-radius: 12px; padding: 10px; text-align: center; font-size: 13px; color: #d88e97; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .food-btn:active { background: #FFF0F3; }
+
+        .calendar-table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 10px; }
+        .calendar-table th { padding: 10px; color: #888; font-weight: normal; font-size: 12px; }
+        .calendar-table td { padding: 12px 0; font-size: 14px; color: #555; position: relative; }
+        .calendar-table td.has-event::after { content: '•'; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); color: var(--pink-dark); font-size: 20px; }
+
+        .progress-bar { height: 10px; background: #eee; border-radius: 5px; overflow: hidden; margin-top: 8px; }
+        .progress-inner { height: 100%; background: linear-gradient(90deg, #FFB6C1, #FF8DA1); border-radius: 5px; }
+        
+        .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 15px; }
+        .heatmap-cell { aspect-ratio: 1; border-radius: 6px; background: #f0f0f0; display: flex; justify-content: center; align-items: center; font-size: 10px; color: #aaa; }
+        .heatmap-cell.lv1 { background: #FFE5EC; color: var(--pink-dark); }
+        .heatmap-cell.lv2 { background: #FFB6C1; color: white; }
+        .heatmap-cell.lv3 { background: #FF8DA1; color: white; }
+
+        .chart-container { width: 100%; height: 160px; position: relative; margin-top: 10px; }
+        canvas { width: 100%; height: 100%; display: block; }
+        .chart-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <div class="header-area">
+        <h1>My Little World ♡</h1>
+        <p>慢慢来，没关系 ♡</p>
+    </div>
+
+    <div class="main-grid">
+        <div class="left-col">
+            <div class="glass-card">
+                <div class="card-header">
+                    <span><span class="icon">💛</span>今日概览</span>
+                    <span id="currentDate" style="font-size:12px; color:#999;"></span>
+                </div>
+                <div id="today-plan-preview" style="font-size:13px; line-height:1.8; color:#666;"></div>
+                <button class="add-btn" style="width:100%; margin-top:10px; padding:10px; background:#FFB6C1;" onclick="openSubPage('sop')">去打卡 SOP</button>
+            </div>
+            <div class="glass-card">
+                <div class="card-header"><span><span class="icon">✨</span>近期动态</span></div>
+                <div id="recent-activity" style="font-size:13px; line-height:2; color:#777;"></div>
+            </div>
+        </div>
+
+        <div class="center-col">
+            <div class="glass-card" style="padding: 16px;">
+                <div class="app-grid">
+                    <div class="app-btn" style="background: #fff0f3;" onclick="openSubPage('sop')"><span class="icon">📋</span><div class="title">SOP 打卡</div><div class="sub">日 / 周 / 月</div></div>
+                    <div class="app-btn" style="background: #f3e5f5;" onclick="openSubPage('health-record')"><span class="icon">🩺</span><div class="title">身体记录</div><div class="sub">病情 & 步数</div></div>
+                    <div class="app-btn" style="background: #FFF3B0;" onclick="openSubPage('food')"><span class="icon">🍔</span><div class="title">饮食记录</div><div class="sub">一键吃喝</div></div>
+                    <div class="app-btn" style="background: #e3f2fd;" onclick="openSubPage('fun')"><span class="icon">🎮</span><div class="title">娱乐收藏</div><div class="sub">待看 ⇄ 已看</div></div>
+                    <div class="app-btn" style="background: #e8f5e9;" onclick="openSubPage('schedule')"><span class="icon">📅</span><div class="title">日程管理</div><div class="sub">计划 & 备忘</div></div>
+                    <div class="app-btn" style="background: #e0f7fa;" onclick="openSubPage('jp')"><span class="icon">📖</span><div class="title">日语学习</div><div class="sub">单词 & 语法</div></div>
+                    <div class="app-btn" style="background: #fce4ec;" onclick="openSubPage('life')"><span class="icon">🛍️</span><div class="title">生活 / 愿望</div><div class="sub">购物 & 心愿</div></div>
+                </div>
+            </div>
+            <div class="glass-card">
+                <div class="card-header"><span><span class="icon">⭐</span>收藏库快速入口</span></div>
+                <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;" id="quick-collections"></div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="glass-card">
+                <div class="card-header">
+                    <span><span class="icon">💗</span>身体状况</span>
+                    <span style="background: #e8f5e9; color: #66bb6a; padding: 2px 8px; border-radius: 10px; font-size: 12px;">还不错 ♡</span>
+                </div>
+                <div class="health-grid">
+                    <div class="health-item"><span class="label">体温</span><span class="value" id="val-temp">-- °C</span></div>
+                    <div class="health-item"><span class="label">血压</span><span class="value" id="val-bp">-- / -- mmHg</span></div>
+                    <div class="health-item"><span class="label">今日步数</span><span class="value" id="val-steps">-- 步</span></div>
+                    <div class="health-item"><span class="label">今日饮水</span><span class="value" id="val-water">0 杯</span></div>
+                </div>
+                <div style="margin-top: 20px; border-top: 1px dashed rgba(0,0,0,0.05); padding-top:15px;">
+                    <div class="card-header" style="margin-bottom:8px; font-size:14px;">🏥 住院信息</div>
+                    <div class="health-item"><span class="label">住院天数</span><span class="value" id="hospital-days">0 天</span></div>
+                    <div class="health-item"><span class="label">入院日</span><span class="value" id="hospital-date">未设置</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active"><span class="nav-icon">🏠</span>首页</div>
+        <div class="nav-item" onclick="openSubPage('stats')"><span class="nav-icon">📊</span>统计</div>
+        <div class="nav-item" onclick="openSubPage('notes')"><span class="nav-icon">📝</span>笔记</div>
+        <div class="nav-item" onclick="openSubPage('settings')"><span class="nav-icon">⚙️</span>设置</div>
+    </nav>
+
+    <div id="subPage" class="sub-page">
+        <div class="back-btn" onclick="closeSubPage()">←</div>
+        <h2 id="subPageTitle">标题</h2>
+        <div id="subPageContent" style="max-width: 600px; margin: 0 auto;"></div>
+    </div>
+
+    <script>
+        // 基础数据结构
+        let appData = {
+            sop: {
+                daily: [{ id: 'd1', text: '早睡 23:00', done: false }, { id: 'd2', text: '好好吃饭 ♡', done: false }],
+                weekly: [{ id: 'w1', text: '大扫除', done: false }],
+                monthly: [{ id: 'm1', text: '整理照片', done: false }]
+            },
+            sopHistory: {}, sopCycle: { dailyDate: '', weeklyDate: '', monthlyDate: '' },
+            activities: [], 
+            healthHistory: {}, 
+            hospital: { date: '', events: [] }, 
+            collections: { 
+                games: { pending: [{text:'塞尔达传说', note:''}], done: [] }, 
+                movies: { pending: [{text:'奥本海默', note:''}], done: [] }, 
+                books: { pending: [{text:'百年孤独', note:''}], done: [] },
+                dramas: { pending: [{text:'某某广播剧', note:''}], done: [] },
+                podcasts: { pending: [{text:'随机波动', note:''}], done: [] }
+            },
+            foodLogs: [], jp: ['多邻国打卡'], life: ['买一瓶护手霜'], wish: ['去一次海边'], schedule: [], notes: ''
+        };
+
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const weekStr = today.getFullYear() + '-' + Math.ceil((((today - new Date(today.getFullYear(), 0, 1)) / 86400000) + new Date(today.getFullYear(), 0, 1).getDay() + 1) / 7);
+        const monthStr = today.getFullYear() + '-' + (today.getMonth() + 1);
+
+        function init() {
+            const saved = localStorage.getItem('MyLittleWorldData_v6');
+            if (saved) appData = JSON.parse(saved);
+            checkReset();
+            updateDateDisplay();
+            renderTodayPreview();
+            renderActivities();
+            renderQuickCollections();
+            renderHealthPanel();
+        }
+
+        function saveData() { localStorage.setItem('MyLittleWorldData_v6', JSON.stringify(appData)); }
+
+        function checkReset() {
+            let changed = false;
+            if (appData.sopCycle.dailyDate !== todayStr) { appData.sop.daily.forEach(i => i.done = false); appData.sopCycle.dailyDate = todayStr; changed = true; }
+            if (appData.sopCycle.weeklyDate !== weekStr) { appData.sop.weekly.forEach(i => i.done = false); appData.sopCycle.weeklyDate = weekStr; changed = true; }
+            if (appData.sopCycle.monthlyDate !== monthStr) { appData.sop.monthly.forEach(i => i.done = false); appData.sopCycle.monthlyDate = monthStr; changed = true; }
+            if (changed) saveData();
+        }
+
+        function updateDateDisplay() {
+            const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            document.getElementById('currentDate').innerText = `${today.getMonth()+1}月${today.getDate()}日 (${days[today.getDay()]})`;
+        }
+
+        function renderTodayPreview() {
+            const dailySop = appData.sop.daily;
+            const done = dailySop.filter(i => i.done).length;
+            document.getElementById('today-plan-preview').innerHTML = `<p>今日 SOP 进度：<b>${done} / ${dailySop.length}</b> 项</p><p>今天也要好好照顾自己哦！</p>`;
+        }
+
+        function addActivity(text) {
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            appData.activities.unshift({ text, date: todayStr, time });
+            if (appData.activities.length > 6) appData.activities.pop();
+            saveData(); renderActivities();
+        }
+
+        function renderActivities() {
+            const container = document.getElementById('recent-activity');
+            container.innerHTML = '';
+            if(appData.activities.length === 0) container.innerHTML = '<p style="color:#ccc;">暂无动态</p>';
+            appData.activities.forEach(act => {
+                container.innerHTML += `<div style="display:flex; gap:10px;"><span style="color:#d1c4e9;">●</span> <span style="flex:1;">${act.text}</span> <span style="color:#ccc; font-size:12px;">${act.date === todayStr ? act.time : act.date.slice(5)}</span></div>`;
+            });
+        }
+
+        function renderHealthPanel() {
+            const todayHealth = appData.healthHistory[todayStr] || { temp: '', bp: '', steps: '', water: 0 };
+            document.getElementById('val-temp').innerText = todayHealth.temp ? todayHealth.temp + ' °C' : '-- °C';
+            document.getElementById('val-bp').innerText = todayHealth.bp || '-- / --';
+            document.getElementById('val-steps').innerText = todayHealth.steps ? todayHealth.steps + ' 步' : '-- 步';
+            document.getElementById('val-water').innerText = (todayHealth.water || 0) + ' 杯';
+            
+            if (appData.hospital.date) {
+                const diff = Math.ceil((new Date() - new Date(appData.hospital.date)) / (1000 * 60 * 60 * 24));
+                document.getElementById('hospital-days').innerText = `${diff > 0 ? diff : 0} 天`;
+                document.getElementById('hospital-date').innerText = appData.hospital.date;
+            }
+        }
+
+        function renderQuickCollections() {
+            const container = document.getElementById('quick-collections');
+            container.innerHTML = '';
+            const items = [
+                { name: '待玩游戏', count: appData.collections.games.pending.length, icon: '🎮' },
+                { name: '待看电影', count: appData.collections.movies.pending.length, icon: '🎬' },
+                { name: '想读的书', count: appData.collections.books.pending.length, icon: '📚' }
+            ];
+            items.forEach(item => {
+                container.innerHTML += `<div style="min-width: 100px; background: rgba(255,255,255,0.7); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer;" onclick="openSubPage('fun')"><div style="font-size: 24px; margin-bottom: 4px;">${item.icon}</div><div style="font-size: 12px; font-weight: 600; color: #555;">${item.name}</div><div style="font-size: 10px; color: #999;">${item.count} 项</div></div>`;
+            });
+        }
+
+        const subPage = document.getElementById('subPage');
+        const subTitle = document.getElementById('subPageTitle');
+        const subContent = document.getElementById('subPageContent');
+
+        function openSubPage(type) {
+            subPage.classList.add('open');
+            subContent.innerHTML = '';
+
+            if (type === 'sop') {
+                subTitle.innerText = '📋 SOP 体系打卡';
+                subContent.innerHTML = `
+                    <div class="glass-card"><div class="card-header">☀️ 每日 SOP</div><div id="sop-daily-list"></div><div class="input-box"><input type="text" id="sop-input-daily" placeholder="添加每日习惯..."><button onclick="addSop('daily')">+</button></div></div>
+                    <div class="glass-card"><div class="card-header">📅 每周 SOP</div><div id="sop-weekly-list"></div><div class="input-box"><input type="text" id="sop-input-weekly" placeholder="添加每周习惯..."><button onclick="addSop('weekly')">+</button></div></div>
+                    <div class="glass-card"><div class="card-header">📆 每月 SOP</div><div id="sop-monthly-list"></div><div class="input-box"><input type="text" id="sop-input-monthly" placeholder="添加每月习惯..."><button onclick="addSop('monthly')">+</button></div></div>
+                `;
+                renderSopList('daily', 'sop-daily-list'); renderSopList('weekly', 'sop-weekly-list'); renderSopList('monthly', 'sop-monthly-list');
+            } 
+            else if (type === 'food') {
+                subTitle.innerText = '🍔 饮食记录';
+                const foodOptions = [{ name: '奶茶', icon: '🧋' }, { name: '烧烤', icon: '🍢' }, { name: '咖啡', icon: '☕' }, { name: '蔬菜', icon: '🥬' }, { name: '水果', icon: '🍎' }, { name: '大餐', icon: '🍲' }, { name: '喝水', icon: '💧' }, { name: '零食', icon: '🍪' }, { name: '甜品', icon: '🍰' }];
+                let html = `<div class="glass-card"><div class="card-header">点一下，自动记录时间 ♡</div><div class="food-grid">`;
+                foodOptions.forEach(f => { html += `<div class="food-btn" onclick="logFood('${f.name}', '${f.icon}')">${f.icon}<br>${f.name}</div>`; });
+                html += `</div></div><div class="glass-card"><div class="card-header">今日吃吃喝喝</div><div id="today-food-log"></div></div>`;
+                subContent.innerHTML = html;
+                const logContainer = document.getElementById('today-food-log');
+                const todayLogs = appData.foodLogs.filter(f => f.date === todayStr);
+                if(todayLogs.length === 0) logContainer.innerHTML = '<p style="color:#ccc; text-align:center;">今天还没有记录哦</p>';
+                else { todayLogs.forEach(log => { logContainer.innerHTML += `<div class="task-item"><span class="task-text">${log.icon} ${log.name}</span><span style="color:#ccc; font-size:12px;">${log.time}</span></div>`; }); }
+            }
+            else if (type === 'health-record') {
+                subTitle.innerText = '🩺 身体与住院记录';
+                const h = appData.healthHistory[todayStr] || { temp: '', bp: '', steps: '' };
+                subContent.innerHTML = `
+                    <div class="glass-card"><div class="card-header">今日身体数据</div><div class="input-box"><input type="text" id="sub-temp" placeholder="体温" value="${h.temp}"></div><div class="input-box"><input type="text" id="sub-bp" placeholder="血压" value="${h.bp}"></div><div class="input-box"><input type="number" id="sub-steps" placeholder="今日步数" value="${h.steps}"></div><button class="add-btn" style="width:100%; margin-top:15px; padding:12px;" onclick="saveHealthData()">保存今日数据</button></div>
+                    <div class="glass-card"><div class="card-header">住院 / 治疗时间线</div><div id="hospital-timeline" style="margin-bottom:15px;"></div><div class="input-box" style="flex-direction:column; gap:8px;"><input type="date" id="sub-hospital-date" value="${appData.hospital.date || todayStr}" style="width:100%;"><input type="text" id="sub-hospital-event" placeholder="记录事件 (如 入院/复查)" style="width:100%;"></div><button class="add-btn" style="width:100%; margin-top:10px; padding:12px; background:#A2D2FF;" onclick="addHospitalEvent()">添加事件</button></div>
+                `;
+                const timeline = document.getElementById('hospital-timeline');
+                if(appData.hospital.events.length === 0) timeline.innerHTML = '<p style="color:#ccc;">暂无时间线记录</p>';
+                else { 
+                    [...appData.hospital.events].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((e, idx) => { 
+                        timeline.innerHTML += `<div style="font-size:13px; margin-bottom:8px; border-left:3px solid #FFB6C1; padding-left:10px; position:relative;">
+                            <span style="color:#FF8DA1; font-weight:bold;">${e.date}</span><br>${e.text}
+                            <span class="del-btn" style="position:absolute; right:0; top:0;" onclick="deleteHospitalEvent(${idx})">✕</span>
+                        </div>`; 
+                    }); 
+                }
+            }
+            else if (type === 'fun') {
+                subTitle.innerText = '🎮 娱乐收藏库';
+                subContent.innerHTML = `<div class="glass-card" id="sub-fun-content"></div>`;
+                const container = document.getElementById('sub-fun-content');
+                [
+                    { key: 'games', label: '🎮 游戏' }, { key: 'movies', label: '🎬 影视' }, 
+                    { key: 'books', label: '📚 书籍' }, { key: 'dramas', label: '🎧 广播剧' }, 
+                    { key: 'podcasts', label: '🎙️ 播客' }
+                ].forEach(cat => {
+                    let html = `<div class="card-header">${cat.label}</div><div style="font-size:12px; color:#999; margin-bottom:5px;">待看/待听：</div>`;
+                    
+                    // 待看列表：前面勾选框，后面删除叉
+                    appData.collections[cat.key].pending.forEach((item, idx) => { 
+                        const text = item.text || item;
+                        html += `<div class="task-item">
+                            <div class="circle-check" onclick="moveCollection('${cat.key}', 'pending', 'done', ${idx})"></div>
+                            <span class="task-text">${text}</span>
+                            <span class="del-btn" onclick="delCollection('${cat.key}', 'pending', ${idx})">✕</span>
+                        </div>`; 
+                    });
+                    
+                    html += `<div style="font-size:12px; color:#999; margin-top:10px; margin-bottom:5px;">已完成：</div>`;
+                    if(appData.collections[cat.key].done.length === 0) html += `<p style="font-size:12px; color:#eee;">暂无</p>`;
+                    
+                    // 已完成列表：打勾状态，带编辑备注按钮和移回按钮
+                    appData.collections[cat.key].done.forEach((item, idx) => { 
+                        const text = item.text || item;
+                        const noteText = item.note ? `<span style="font-size:10px; color:#aaa; margin-left:5px;">(${item.note})</span>` : '';
+                        html += `<div class="task-item done">
+                            <div class="circle-check checked" onclick="moveCollection('${cat.key}', 'done', 'pending', ${idx})"></div>
+                            <span class="task-text">${text} ${noteText}</span>
+                            <span class="edit-btn" onclick="editCollectionNote('${cat.key}', ${idx})">✏️</span>
+                            <span class="del-btn" onclick="delCollection('${cat.key}', 'done', ${idx})">✕</span>
+                        </div>`; 
+                    });
+                    
+                    html += `<div class="input-box"><input type="text" id="input-${cat.key}" placeholder="添加新的${cat.label}..."><button onclick="addCollectionItem('${cat.key}')">+</button></div><div style="height:20px;"></div>`;
+                    container.innerHTML += html;
+                });
+            }
+            else if (type === 'schedule') {
+                subTitle.innerText = '📅 日程管理';
+                subContent.innerHTML = `<div class="glass-card" id="sub-schedule-list"></div><div class="glass-card"><div class="input-box"><input type="date" id="schedule-date" style="flex:1;"></div><div class="input-box"><input type="text" id="schedule-text" placeholder="日程内容..."></div><button class="add-btn" style="width:100%; margin-top:10px; padding:12px;" onclick="addSchedule()">添加日程</button></div>`;
+                const list = document.getElementById('sub-schedule-list');
+                [...appData.schedule].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((s) => {
+                    list.innerHTML += `<div class="task-item"><span style="color:#8B5A6B; font-weight:600; margin-right:10px;">${s.date}</span><span class="task-text">${s.text}</span></div>`;
+                });
+            }
+            else if (type === 'jp' || type === 'life' || type === 'wish') {
+                const titles = { jp: '📖 日语学习', life: '🛍️ 生活记录', wish: '💖 我的愿望' };
+                subTitle.innerText = titles[type];
+                subContent.innerHTML = `<div class="glass-card" id="sub-custom-list"></div><div class="glass-card"><div class="input-box"><input type="text" id="input-custom" placeholder="添加记录..."><button onclick="addCustomItem('${type}')">+</button></div></div>`;
+                const list = document.getElementById('sub-custom-list');
+                appData[type].forEach((item, idx) => { list.innerHTML += `<div class="task-item"><span class="task-text">${item}</span><span class="del-btn" onclick="deleteCustomItem('${type}', ${idx})">✕</span></div>`; });
+            }
+            else if (type === 'notes') {
+                subTitle.innerText = '📝 随记便签 & 日历';
+                const now = new Date(); const year = now.getFullYear(); const month = now.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                let calHtml = `<div class="glass-card"><div class="card-header">${year} 年 ${month + 1} 月</div><table class="calendar-table"><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>`;
+                let dayCount = 1;
+                for (let i = 0; i < 6; i++) {
+                    calHtml += '<tr>';
+                    for (let j = 0; j < 7; j++) {
+                        if (i === 0 && j < firstDay) calHtml += '<td></td>';
+                        else if (dayCount > daysInMonth) break;
+                        else {
+                            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
+                            const hasEvent = appData.schedule.some(s => s.date === dateStr) || appData.activities.some(a => a.date === dateStr) || appData.foodLogs.some(f => f.date === dateStr);
+                            const isToday = (dayCount === now.getDate()) ? 'color:#FF8DA1; font-weight:bold;' : '';
+                            calHtml += `<td class="${hasEvent ? 'has-event' : ''}" style="${isToday}">${dayCount}</td>`;
+                            dayCount++;
+                        }
+                    }
+                    calHtml += '</tr>';
+                    if (dayCount > daysInMonth) break;
+                }
+                calHtml += '</table></div>';
+                subContent.innerHTML = calHtml + `<div class="glass-card"><div class="card-header">碎碎念便签</div><textarea id="sub-notes" style="width:100%; height:200px; border:none; background:transparent; outline:none; font-size:14px; line-height:1.6; color:#555;" placeholder="记录碎碎念...">${appData.notes}</textarea><button class="add-btn" style="width:100%; margin-top:10px; padding:12px;" onclick="saveNotes()">保存笔记</button></div>`;
+            }
+            else if (type === 'settings') {
+                subTitle.innerText = '⚙️ 设置';
+                subContent.innerHTML = `
+                    <div class="glass-card"><div class="card-header">数据管理</div><p style="font-size:12px; color:#888; margin-bottom:15px;">所有数据保存在手机本地，绝对隐私安全。</p><button class="add-btn" style="width:100%; padding:12px; background:#FF8DA1; margin-bottom:10px;" onclick="exportData()">导出备份数据</button><button class="add-btn" style="width:100%; padding:12px; background:#A2D2FF; margin-bottom:10px;" onclick="importDataPrompt()">导入备份数据</button><button class="add-btn" style="width:100%; padding:12px; background:#ffb3b3;" onclick="clearData()">清空所有数据</button></div>
+                `;
+            }
+            else if (type === 'stats') {
+                subTitle.innerText = '📊 数据复盘与统计';
+                
+                const dailyDone = appData.sop.daily.filter(i => i.done).length;
+                const dailyTotal = appData.sop.daily.length;
+                const dailyPercent = dailyTotal === 0 ? 0 : Math.round((dailyDone / dailyTotal) * 100);
+
+                const weekFoods = appData.foodLogs.filter(f => Math.ceil(Math.abs(new Date() - new Date(f.date)) / (1000 * 60 * 60 * 24)) <= 7);
+                const milkTeaCount = weekFoods.filter(f => f.name === '奶茶').length;
+                const bbqCount = weekFoods.filter(f => f.name === '烧烤').length;
+                const vegCount = weekFoods.filter(f => f.name === '蔬菜').length;
+
+                const doneGames = appData.collections.games.done.length;
+                const doneMovies = appData.collections.movies.done.length;
+                const doneBooks = appData.collections.books.done.length;
+                const doneDramas = appData.collections.dramas.done.length;
+                const donePodcasts = appData.collections.podcasts.done.length;
+
+                let html = `
+                    <div class="glass-card">
+                        <div class="card-header">今日 SOP 完成度</div>
+                        <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:bold; color:#FF8DA1;"><span>${dailyDone} / ${dailyTotal}</span><span>${dailyPercent}%</span></div>
+                        <div class="progress-bar"><div class="progress-inner" style="width: ${dailyPercent}%;"></div></div>
+                    </div>
+                    
+                    <div class="glass-card">
+                        <div class="card-header">📈 近 7 天身体趋势 (体温/步数)</div>
+                        <div class="chart-container"><canvas id="lineChart"></canvas></div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-color" style="background:#FF8DA1;"></div>体温</div>
+                            <div class="legend-item"><div class="legend-color" style="background:#A2D2FF;"></div>步数</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card">
+                        <div class="card-header">📊 近 7 天饮食摄入对比</div>
+                        <div class="chart-container"><canvas id="barChart"></canvas></div>
+                    </div>
+
+                    <div class="glass-card">
+                        <div class="card-header">🎉 娱乐收藏占比 (已完成)</div>
+                        <div class="chart-container"><canvas id="pieChart"></canvas></div>
+                        <div class="chart-legend" id="pieLegend"></div>
+                    </div>
+
+                    <div class="glass-card">
+                        <div class="card-header">📅 近 14 天 SOP 打卡热力图</div>
+                        <div class="heatmap-grid" id="heatmap-container"></div>
+                    </div>
+                `;
+                subContent.innerHTML = html;
+
+                const grid = document.getElementById('heatmap-container');
+                for (let i = 13; i >= 0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    const dStr = d.toISOString().split('T')[0];
+                    let count = appData.sopHistory[dStr] || 0;
+                    if (dStr === todayStr) count = dailyDone; 
+                    let lv = count > 0 && count <= 2 ? 'lv1' : count > 2 && count <= 4 ? 'lv2' : count > 4 ? 'lv3' : '';
+                    grid.innerHTML += `<div class="heatmap-cell ${lv}">${d.getDate()}</div>`;
+                }
+
+                setTimeout(() => {
+                    drawLineChart();
+                    drawBarChart(milkTeaCount, bbqCount, vegCount);
+                    drawPieChart(doneGames, doneMovies, doneBooks, doneDramas, donePodcasts);
+                }, 100);
+            }
+        }
+
+        function closeSubPage() { subPage.classList.remove('open'); }
+
+        // --- 绘图函数 ---
+        function drawLineChart() {
+            const canvas = document.getElementById('lineChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const w = rect.width; const h = rect.height; const pad = 20;
+            let temps = []; let steps = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                const dStr = d.toISOString().split('T')[0];
+                const record = appData.healthHistory[dStr] || {};
+                temps.push(parseFloat(record.temp) || null);
+                steps.push(parseFloat(record.steps) || null);
+            }
+
+            ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 1;
+            for(let i=0; i<=4; i++) { ctx.beginPath(); ctx.moveTo(pad, pad + (h-pad*2)*(i/4)); ctx.lineTo(w-pad, pad + (h-pad*2)*(i/4)); ctx.stroke(); }
+
+            function drawLine(data, color, maxVal) {
+                ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+                let firstPoint = true;
+                data.forEach((val, i) => {
+                    if (val === null) return;
+                    const x = pad + (w - pad*2) * (i / 6);
+                    const y = h - pad - ((val / maxVal) * (h - pad*2));
+                    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+                    else { ctx.lineTo(x, y); }
+                });
+                ctx.stroke();
+                data.forEach((val, i) => {
+                    if (val === null) return;
+                    const x = pad + (w - pad*2) * (i / 6);
+                    const y = h - pad - ((val / maxVal) * (h - pad*2));
+                    ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
+                });
+            }
+            drawLine(temps, '#FF8DA1', 40);
+            drawLine(steps, '#A2D2FF', 10000);
+        }
+
+        function drawBarChart(milk, bbq, veg) {
+            const canvas = document.getElementById('barChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const w = rect.width; const h = rect.height;
+            const data = [milk, bbq, veg];
+            const labels = ['奶茶', '烧烤', '蔬菜'];
+            const colors = ['#FFB6C1', '#F4A460', '#A8E6CF'];
+            const max = Math.max(...data, 1);
+            const barWidth = w / 6; const gap = w / 3;
+            
+            data.forEach((val, i) => {
+                const barH = (val / max) * (h - 40);
+                const x = gap/2 + i * gap - barWidth/2;
+                const y = h - 20 - barH;
+                ctx.fillStyle = colors[i];
+                ctx.beginPath(); ctx.roundRect(x, y, barWidth, barH, 5); ctx.fill();
+                ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(labels[i], x + barWidth/2, h - 5);
+                ctx.fillStyle = '#555'; ctx.fillText(val, x + barWidth/2, y - 5);
+            });
+        }
+
+        function drawPieChart(games, movies, books, dramas, podcasts) {
+            const canvas = document.getElementById('pieChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const w = rect.width; const h = rect.height;
+            const centerX = w / 2; const centerY = h / 2; const radius = Math.min(w, h) / 2 - 10;
+            const data = [games, movies, books, dramas, podcasts];
+            const total = data.reduce((a, b) => a + b, 0);
+            const colors = ['#FFB6C1', '#A2D2FF', '#FFF3B0', '#E6E6FA', '#A8E6CF'];
+            const labels = ['🎮 游戏', '🎬 影视', '📚 书籍', '🎧 广播剧', '🎙️ 播客'];
+            
+            const legend = document.getElementById('pieLegend');
+            legend.innerHTML = labels.map((l, i) => `<div class="legend-item"><div class="legend-color" style="background:${colors[i]};"></div>${l} (${data[i]})</div>`).join('');
+
+            if (total === 0) {
+                ctx.fillStyle = '#eee'; ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#aaa'; ctx.textAlign = 'center'; ctx.fillText('暂无数据', centerX, centerY);
+                return;
+            }
+
+            let startAngle = -Math.PI / 2;
+            data.forEach((val, i) => {
+                if (val === 0) return;
+                const sliceAngle = (val / total) * Math.PI * 2;
+                ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle); ctx.closePath();
+                ctx.fillStyle = colors[i]; ctx.fill();
+                startAngle += sliceAngle;
+            });
+            ctx.beginPath(); ctx.arc(centerX, centerY, radius*0.6, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+        }
+
+        // --- 核心操作逻辑 ---
+        function renderSopList(type, elementId) {
+            const list = document.getElementById(elementId);
+            list.innerHTML = '';
+            appData.sop[type].forEach((item, idx) => {
+                list.innerHTML += `<div class="task-item ${item.done?'done':''}"><div class="circle-check ${item.done?'checked':''}" onclick="toggleSop('${type}', ${idx})"></div><span class="task-text">${item.text}</span><span class="del-btn" onclick="deleteSop('${type}', ${idx})">✕</span></div>`;
+            });
+        }
+
+        function toggleSop(type, index) {
+            appData.sop[type][index].done = !appData.sop[type][index].done;
+            if (type === 'daily') {
+                const dailyDoneCount = appData.sop.daily.filter(i => i.done).length;
+                appData.sopHistory[todayStr] = dailyDoneCount;
+                renderTodayPreview();
+            }
+            saveData(); openSubPage('sop'); 
+            if(appData.sop[type][index].done) addActivity(`完成 ${type==='daily'?'每日':type==='weekly'?'每周':'每月'}：${appData.sop[type][index].text}`);
+        }
+
+        function addSop(type) {
+            const input = document.getElementById(`sop-input-${type}`);
+            if (!input.value.trim()) return;
+            appData.sop[type].push({ id: Date.now().toString(), text: input.value.trim(), done: false });
+            saveData(); openSubPage('sop');
+        }
+        function deleteSop(type, index) { appData.sop[type].splice(index, 1); saveData(); openSubPage('sop'); }
+
+        function saveHealthData() {
+            const h = appData.healthHistory[todayStr] || {};
+            h.temp = document.getElementById('sub-temp').value;
+            h.bp = document.getElementById('sub-bp').value;
+            h.steps = document.getElementById('sub-steps').value;
+            appData.healthHistory[todayStr] = h;
+            saveData(); renderHealthPanel(); addActivity('更新了身体数据'); closeSubPage();
+        }
+
+        function addHospitalEvent() {
+            const date = document.getElementById('sub-hospital-date').value;
+            const text = document.getElementById('sub-hospital-event').value;
+            if(!date || !text) return alert('请填写日期和事件');
+            if(!appData.hospital.date) appData.hospital.date = date;
+            appData.hospital.events.push({ date, text });
+            saveData(); renderHealthPanel(); openSubPage('health-record'); addActivity(`住院记录：${text}`);
+        }
+        
+        function deleteHospitalEvent(index) {
+            if(!confirm('确定删除这条记录吗？')) return;
+            const sorted = [...appData.hospital.events].sort((a,b) => new Date(b.date) - new Date(a.date));
+            const target = sorted[index];
+            const realIdx = appData.hospital.events.findIndex(e => e.date === target.date && e.text === target.text);
+            if (realIdx > -1) appData.hospital.events.splice(realIdx, 1);
+            saveData(); openSubPage('health-record');
+        }
+
+        function logFood(name, icon) {
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            appData.foodLogs.unshift({ date: todayStr, time, name, icon });
+            if (name === '喝水') {
+                if(!appData.healthHistory[todayStr]) appData.healthHistory[todayStr] = {};
+                appData.healthHistory[todayStr].water = (appData.healthHistory[todayStr].water || 0) + 1;
+                renderHealthPanel();
+            }
+            saveData(); addActivity(`吃/喝了：${icon} ${name}`); openSubPage('food');
+        }
+
+        // 核心：打勾移到已完成，取消勾选移回待看
+        function moveCollection(catKey, fromState, toState, index) {
+            const item = appData.collections[catKey][fromState].splice(index, 1)[0];
+            const objItem = typeof item === 'string' ? { text: item, note: '' } : item;
+            appData.collections[catKey][toState].push(objItem);
+            saveData(); renderQuickCollections(); openSubPage('fun');
+            if(toState === 'done') addActivity(`完成：${objItem.text}`);
+        }
+
+        function editCollectionNote(catKey, index) {
+            const item = appData.collections[catKey].done[index];
+            const text = typeof item === 'string' ? item : item.text;
+            const currentNote = item.note || '';
+            const note = prompt(`给《${text}》添加备注/花费时间/打分：`, currentNote);
+            if (note !== null) {
+                if(typeof appData.collections[catKey].done[index] === 'string') {
+                    appData.collections[catKey].done[index] = { text: text, note: note };
+                } else {
+                    appData.collections[catKey].done[index].note = note;
+                }
+                saveData(); openSubPage('fun');
+            }
+        }
+
+        function addCollectionItem(key) {
+            const input = document.getElementById(`input-${key}`);
+            if (!input.value.trim()) return;
+            appData.collections[key].pending.push({ text: input.value.trim(), note: '' });
+            saveData(); renderQuickCollections(); openSubPage('fun');
+        }
+        
+        // 打叉直接彻底删除
+        function delCollection(catKey, state, index) {
+            if(!confirm('确定要彻底删除这条记录吗？')) return;
+            appData.collections[catKey][state].splice(index, 1); 
+            saveData(); renderQuickCollections(); openSubPage('fun'); 
+        }
+        
+        function addCustomItem(key) {
+            const input = document.getElementById('input-custom');
+            if (!input.value.trim()) return;
+            appData[key].push(input.value.trim());
+            saveData(); openSubPage(key);
+        }
+        function deleteCustomItem(key, index) { appData[key].splice(index, 1); saveData(); openSubPage(key); }
+        function addSchedule() {
+            const date = document.getElementById('schedule-date').value;
+            const text = document.getElementById('schedule-text').value;
+            if (!date || !text) return alert('请填写完整');
+            appData.schedule.push({ date, text }); saveData(); openSubPage('schedule');
+        }
+        function saveNotes() { appData.notes = document.getElementById('sub-notes').value; saveData(); alert('笔记已保存 ♡'); }
+
+        function exportData() { navigator.clipboard.writeText(JSON.stringify(appData)).then(() => alert('数据已复制，可粘贴到备忘录备份！')); }
+        function importDataPrompt() {
+            const str = prompt('请粘贴之前备份的数据：');
+            if(str) {
+                try { const parsed = JSON.parse(str); appData = parsed; saveData(); location.reload(); } 
+                catch(e) { alert('数据格式错误，导入失败'); }
+            }
+        }
+        function clearData() { if(confirm('确定清空所有数据吗？')) { localStorage.removeItem('MyLittleWorldData_v6'); location.reload(); } }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+`;
+
+// 运行 WebView
+let view = new WebView();
+await view.loadHTML(html);
+await view.present();
